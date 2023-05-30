@@ -1,0 +1,890 @@
+---
+title: '`glitter` makes SPARQL'
+subtitle: '`glitter`, un package R pour explorer et collecter des données du web sémantique'
+author: "Lise Vaudor"
+institute: "Séminaire R à l'Usage des Sciences Sociales"
+date: "07/04/2023"
+format: 
+  revealjs:
+    df-print: kable
+    scrollable: true
+    logo: img/logo_small.png
+    css:
+     styles.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
+library(glitter)
+library(tidyverse)
+library(kableExtra)
+library(stringr)
+ show=function(dt){
+   dt %>% 
+     as.data.frame() %>% 
+     kable() %>% 
+     kable_styling(bootstrap_options = c("hover","condensed"),
+                 full_width = F,
+                 position = "float_left",
+                 font_size = 10)
+   }
+```
+
+# Projet RECIT et package glitter
+
+## Projet: origine
+
+<div>
+
+![](img/im_RUSS_1.jpg)
+
+</div>
+
+-   **Analyste de données** dans un labo de géographie (UMR 5600 Environnement Ville Société)
+
+-   Rôle **pédagogique**: aider les collègues à **utiliser R** pour leurs analyses/valorisation (blog[🔗](http://perso.ens-lyon.fr/lise.vaudor/))
+
+-   Travail d'**appui à la recherche** => développement d'outils d'analyse, recueil de données du web (API, web-scraping...)
+
+-   Intérêt pour les **données du web** (réseaux sociaux, projet Wikimedia)
+
+-   Découverte du **web des données** (LOD: Linked Open Data) via les Wikidata
+
+## Projet: RECIT
+
+<div>
+
+![](img/im_RUSS_3.jpg)
+
+</div>
+
+Projet émergent ENS **RECIT**:
+
+**R** pour l'**E**xploration et la **C**ollecte **I**ntégrée de **T**riplets de données
+
+## Projet: débuts et cas d'études
+
+<div>
+
+![](img/im_RUSS_4.jpg)
+
+</div>
+
+Stage M2 **Camille Scheffler** et exploration des Wikidata pour deux cas d'études:
+
+-   Les **jumelages** en Europe et dans le monde (Camille Scheffler, Ninon Briot, ATER ENS de Lyon)
+-   Le [**lobbyisme** aux USA](http://geoconfluences.ens-lyon.fr/informations-scientifiques/a-la-une/carte-a-la-une/lieux-de-pouvoir-lobbying-etats-unis) (Camille Scheffler, Florence Nussbaum, MCF ENS de Lyon)
+
+## Projet: développement
+
+<div>
+
+![](img/im_RUSS_5.jpg)
+
+</div>
+
+En lien (et en parallèle) aux cas d'études de Camille, début du **développement du package R `glitter`** en 2021.
+
+Première prestation de **Maëlle Salmon** début 2022
+
+## Projet: à venir
+
+<div>
+
+![](img/im_RUSS_7.jpg)
+
+</div>
+
+2023: second gros chantier sur le package: nouvelle presta de 💪Maëlle
+
+## Projet: objectifs
+
+🎯 Promouvoir l'usage (exploration, recueil, analyse) des données du web sémantique pour les chercheurs et étudiants usagers de R, en:
+
+-   facilitant l'**écriture** des requêtes SPARQL
+-   facilitant l'**envoi** des requêtes
+-   facilitant le **nettoyage** des résultats pour une analyse/valorisation ultérieure dans R
+
+# Web sémantique
+
+## Web sémantique et Linked Open Data
+
+💡 **Web sémantique** Vision du web dans laquelle les données sont structurées et organisées pour être traitables par des machines => lien étroit aux principes FAIR (Findable Accessible Interoperable Reusable)
+
+🧱️ **Linked Open Data**: Une réalisation concrète de cette vision, consistant en des données interconnectées et accessible sur le web. *Web des données*
+
+## Linked Open Data: Données du web / web des données
+
+![© Camille Scheffler](img/web_des_donnees_cscheffler.png){width="1500px"}
+
+## Linked Open Data: : LOD-cloud
+
+![](img/lod-cloud.jpeg){height="700px"}
+
+## Linked Open Data
+
+![© Camille Scheffler](img/LOD_principes_cscheffler.png){width="1500px"} [exemple: URI correspondant à Victor Hugo sur dbpedia](https://dbpedia.org/page/Victor_Hugo)
+
+## Linked Open Data: difficultés d'appropriation
+
+<table><td>
+
+- 👀 ce qu'on appréhende directement: le **web documentaire** 
+- 💭 difficultés liées à la structure des données en **graphes** 
+- visualisation souvent **incomplète** du graphe (modèle de données) - métadonnées intégrées aux données => il faut collecter les données pour comprendre ce qu'il y a dedans 
+- transformation en données **tabulaires** pour analyse  
+</td>
+<td>
+[](img/donnees_en_graphe.png){height="550px"}
+</td></table
+
+## Linked Open Data: : difficultés de collecte
+
+
+<table><td>
+![](img/dialogue.jpg){width="1500px"} 
+</td><td>
+
+<td>
+![](img/sparql_to_r\_short.png){width="500px"} 
+
+Importance des **exemples de requêtes SPARQL** pour explorer les bases de données Or, le langage SPARQL est **spécifique** à 
+
+- cette **étape** (dans l'analyse) du recueil de données 
+
+- ce **type** de données (les Linked Open Data)
+</td>
+
+# Exploration de Wikidata
+
+## Wikidata: exploration côté "documentaire"
+
+![](img/Marius_et_Jeannette_WD.png){width="1400px"}
+
+[🔗Lien](https://www.wikidata.org/wiki/Q3293881)
+
+## Wikidata et... ChatGPT
+
+Avant: entrée par le web "documentaire". Maintenant... bonjour ChatGPT
+
+![](img/dialogue_chatGPT_1.png){width="1200px"}
+
+![](img/dialogue_chatGPT_2.png){width="1200px"}
+
+## Wikidata: exploration côté "données"
+
+Passage par le **Wikidata Query Service (WDQS)**
+
+![](img/WDQS_films_query.png){width="1400px"}
+
+[🔗Lien](https://query.wikidata.org/#SELECT%20%3Ffilm%20%3FfilmLabel%20%0AWHERE%20%0A%7B%0A%20%20%3Ffilm%20wdt%3AP31%20wd%3AQ11424.%20%0A%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22%5BAUTO_LANGUAGE%5D%2Cen%22.%20%7D%0A%7D%0ALIMIT%2010)
+
+<!-- bcp expérimenté SPARQL et triplets de données par ce biais car existe exemples, documentation, et ressources accessibles par web documentaire -->
+
+## Wikidata: focus sur le SPARQL endpoint (depuis le navigateur)
+
+```         
+SELECT ?film ?filmLabel 
+WHERE {
+  ?film wdt:P31 wd:Q11424.
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". 
+  } 
+}
+LIMIT 10
+```
+
+-   ✍️ Rédaction de la requête SPARQL
+-   ⚙️ Exécution depuis le SPARQL endpoint (navigateur web)
+-   📥 Affichage/Téléchargement des résultats
+
+## Wikidata: focus sur le code depuis R
+
+```{r SPARQL_in_R, eval=FALSE}
+query='SELECT ?film ?filmLabel 
+WHERE {
+  ?film wdt:P31 wd:Q11424.
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+  }
+}'
+
+result=purrr::quietly(WikidataQueryServiceR::query_wikidata)(query)
+tib=result$r
+```
+
+-   ✍️ Rédaction de la requête SPARQL
+-   ⚙️ Exécution depuis R
+-   🎁 Récupération du tableau de résultats en tant qu'objet R
+
+🎯 Chaîne de traitement reproductible
+
+## Wikidata: focus sur le code depuis R, avec glitter
+
+```{r glitter_no_SPARQL}
+tib <- spq_init() %>% 
+  spq_add("?film wdt:P31 wd:Q11424", .label="?film") %>% 
+  spq_head(n=10) %>% 
+  spq_perform()
+```
+
+<!-- Sans limite, cette requête retournerait 267307 résultats (fonctionne avec glitter, requête directe sur WDQS entraînte Timeout) -->
+
+-   ✍️ ⚙️ Rédaction et envoi de commandes R
+-   🎁 Recueil du tableau de résultats en tant qu'objet R
+
+```{r show_result_init,  echo=FALSE}
+tib
+```
+
+## Wikidata: avant-après glitter
+
+Avant:
+
+```{r bef_glitter, eval=FALSE}
+query='SELECT ?film ?filmLabel WHERE {
+  ?film wdt:P31 wd:Q11424.
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".
+  }
+}
+LIMIT 10'
+result=WikidataQueryServiceR::query_wikidata(query)
+tib=result$r
+```
+
+Après:
+
+```{r aft_glitter, eval=FALSE}
+tib <- spq_init() %>% 
+  spq_add("?film wdt:P31 wd:Q11424",.label="?film") %>% 
+  spq_head(n=10) %>% 
+  spq_perform()
+```
+
+# Exemple de requête et valorisation: lieux de fiction
+
+## Ex. lieux de fiction: que veut-on faire?
+
+-   🎥 On souhaite récupérer dans Wikidata les données relatives aux films,
+-   📍 notamment le lieu de la narration (et les coordonnées associées),
+-   🌍 pour les placer sur une carte.
+
+[🔗Lien](https://www.wikidata.org/wiki/Q3293881)
+
+## Ex. lieux de fiction: recueil des données
+
+```{r req1_lf}
+tib <- spq_init() %>%                 # Initialise requête puis
+  spq_add("?film wdt:P31 wd:Q11424",  # Ajoute motif "?film est une instance de film" 
+          .label="?film") %>%         # ... étiquette ?film  puis
+  spq_add("?film wdt:P840 ?loc",      # Ajoute motif "?film a pour localisation narrative ?loc 
+          .label="?loc") %>%          # ... étiquette ?loc puis
+  spq_language("en,fr") %>%           # Affiche les étiquettes en anglais, ou à défaut en français puis
+  spq_head(n=10) %>%                  # Sélectionne les 10 premiers résultats puis
+  spq_perform()                       # Envoie la requête
+```
+
+```{r req1_lf_show , echo=FALSE}
+tib
+```
+
+## Ex. lieux de fiction: pas trop de données?
+
+Combien de films ont la localisation narrative renseignée dans Wikidata?
+
+```{r req_glob_lf}
+tib <- spq_init() %>%                 # Initialise requête puis
+  spq_add("?film wdt:P31 wd:Q11424",  # Ajoute motif "?film est une instance de film"
+          .label="?film") %>%         # ... étiquette ?film puis
+  spq_add("?film wdt:P840 ?loc",      # Ajoute motif "?film a pour lieu de l'action ?loc" 
+          .label="?loc") %>%          # ...étiquette ?loc puis
+  spq_summarise(n_films=n(film)) %>%  # Résume en comptant le nombre de films puis
+  spq_perform()                       # Envoie la requête
+```
+
+```{r req_glob_lf_show , echo=FALSE}
+tib
+```
+
+## Ex. lieux de fiction : on va restreindre un peu (géographiquement) ...
+
+```{r lf_1}
+lf_1=spq_init() %>%                    # Initialise requête puis
+  spq_add("?film wdt:P31 wd:Q11424",   # Ajoute motif "?film est une instance de film"
+          .label="?film") %>%          # ... étiquette ?film
+  spq_add("?film wdt:P840 ?loc",       # Ajoute motif "?film a pour localisation narrative ?loc
+          .label="?loc") %>%           #  (à étiqueter) puis
+  spq_add("?loc wdt:P625 ?coords",     # Ajoute motif "?loc a pour coordonnées spatiales ?coords" 
+          .within_box=list(southwest=c(3,43),     # ... restreins pour que les coordonnées soient comprises
+                           northeast=c(7,47))) %>% # ... dans un cadre défini par ces deux points (S-O et N-E) puis
+  spq_language("fr") %>%               # Etiquette de préférence en français puis    
+  spq_perform()                        # Envoie la requête
+```
+
+Cette table comprend `r nrow(lf_1)` lignes. Voici les premières:
+
+```{r show_lf_1}
+lf_1 %>% head()
+```
+
+<!-- La récup de la totalité des films localisés est possible (prend une 15aine de secondes) mais j'anticipe pour la production de la carte => je veux pas un jeu de données trop lourd -->
+
+## Ex. lieux de fiction: et on enrichit!
+
+```{r lf_2}
+lf_2=spq_init() %>%                    # Initialise requête puis
+  spq_add("?film wdt:P31 wd:Q11424",   # Ajoute motif "?film est une instance de film"
+          .label="?film") %>%          # ... étiquette ?film puis
+  spq_add("?film wdt:P840 ?loc",       # Ajoute motif "?film a pour localisation narrative ?loc
+          .label="?loc") %>%           # ... étiquette ?loc puis
+  spq_add("?loc wdt:P625 ?coords",     # Ajoute motif "?loc a pour coordonnées spatiales ?coords"
+          .within_box=list(southwest=c(3,43),       # ... restreins pour que les coordonnées soient comprises
+                          northeast=c(7,47))) %>%   # ... dans un cadre défini par ces deux points (S-O et N-E) puis
+  spq_add("?film wdt:P18 ?image",      # Ajoute motif "?film a pour image d'illustration ?image" 
+          .required=FALSE) %>%                      # ... si dispo, puis 
+  spq_add("?film wdt:P921 ?subject",   # Ajoute motif "?film a pour sujet ?subject"
+          .label="?subject", .required=FALSE) %>%   # ... si dispo, et étiquette ?subject puis
+  spq_add("?film wdt:P577 ?date") %>%  # Ajoute motif "?film a été publié à la date ?date puis
+  spq_mutate(year=year(date)) %>%      # Ajoute variable year qui correspond à l'année de ?date puis
+  spq_language("fr,en") %>%            # Etiquette quand demandé de préférence en français, à défaut en anglais puis
+  spq_perform()                        # Envoie la requête
+```
+
+## Ex. lieux de fiction: et on enrichit!
+
+Cette table comprend `r nrow(lf_2)` lignes. Voici les premières:
+
+```{r calc_lf_2_show }
+lf_2_show <- lf_2 %>% 
+   select(filmLabel, locLabel,coords, image,subjectLabel) %>% 
+   unique() %>% 
+   head()
+```
+
+```{r lf_2_show}
+lf_2_show
+```
+
+## Ex. lieux de fiction: requête SPARQL
+
+```         
+SELECT ?film ?loc ?coords ?image ?subject ?date (YEAR(?date) AS ?year)
+WHERE{
+
+?film wdt:P31 wd:Q11424.
+?film wdt:P840 ?loc.
+SERVICE wikibase:box {
+  ?loc wdt:P625 ?coords.
+  bd:serviceParam wikibase:cornerSouthWest 'Point(3 43)'^^geo:wktLiteral.
+  bd:serviceParam wikibase:cornerNorthEast 'Point(7 47)'^^geo:wktLiteral.
+}
+OPTIONAL {?film wdt:P18 ?image.}
+OPTIONAL {?film wdt:P921 ?subject.}
+?film wdt:P577 ?date.
+SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en".}
+}
+```
+
+## Ex. lieux de fiction: nettoyage sous R
+
+```{r lf_c}
+lf_c=lf_2 %>%    # Considère lf_2 puis
+  clean_wikidata_table() %>% # préfixe les uri
+  select(film,ends_with("Label"),coords,image,year) %>%  # Sélectionne ces variables (dont "....Label") puis
+  group_by(film,coords,image,locLabel,filmLabel) %>%     # Groupe par ces variables puis 
+  summarise(subjectLabel=paste0(unique(subjectLabel),    # Résume par groupe: le sujet (sur une seule ligne)   
+                                        collapse=", "),  #  ... en séparant les éléments par ", "
+            year=min(year),                              #  ... et l'année comme minimum des années de sortie   
+            .groups="drop")                              # Dégroupe
+```
+
+Cette table comprend `r nrow(lf_c)` lignes. Voici les premières:
+
+```{r show_lf_c}
+head(lf_c)
+```
+
+## Ex. lieux de fiction: préparation des données pour carto
+
+💬 Préparation d'une fenêtre "pop-up" (langage **html**) pour **affichage d'infos dans la carte**
+
+```{r}
+lf_m =lf_c %>% 
+  transform_wikidata_coords("coords") %>% 
+  mutate(popup=glue::glue("<h1>{filmLabel}</h1>
+                           <li>Lieu: {locLabel}</li>
+                           <li>Année de sortie: {year}</li>")) %>% 
+  mutate(popup=case_when(is.na(image)~popup,
+                         !is.na(image)~glue::glue("{popup}
+                                                  <img src='{image}' height='200'>"))) %>% 
+  mutate(popup=case_when(is.na(subjectLabel)~popup,
+                         !is.na(subjectLabel)~glue::glue("{popup}
+                                                         <li>Thèmes: {subjectLabel}</li>")))
+```
+
+## Ex. lieux de fiction: production d'une carte
+
+🌍 Production d'une carte leaflet (carte interactive dans un doc. html).
+
+```{r build_map_film }
+library(leaflet) 
+
+# Définition d'une échelle colorée 
+# (en fonction de date de sortie) 
+pal <- colorNumeric(c("red", "green", "blue"), c(1895,1950,1970,1990,2010,2021)) 
+# Création de la carte 
+map=leaflet(lf_m) %>% # déf carte 
+  addTiles() %>% # ajout fond de carte
+  addCircleMarkers(col=~pal(year), ~lng, ~lat,
+                   popup = ~popup,
+                   clusterOptions = markerClusterOptions()) 
+```
+
+```{r, echo=FALSE}
+map 
+```
+
+# Dimensionnement des requêtes
+
+## Dimensionnement des requêtes
+
+<table><td>
+
+Temps de réponse du serveur limité par un paramètre de Time out:
+
+- Wikidata Query Service : 60s
+- client (par ex. glitter): 300s 
+
+=> 220 000 lignes pour **film** environ: 
+
+- Wikidata Query Service : ❌ 
+- client (par ex. glitter): ✅️ 
+
+</td><td>
+![](img/taille_requete_1.png) 
+</td></table>
+
+## Dimensionnement des requêtes
+
+<table><td>
+
+Temps de réponse du serveur limité par un paramètre de Time out:
+
+- Wikidata Query Service : 60s 
+- client (par ex. glitter): 300s
+
+=> 2 millions de lignes pour **film**, genre, actor 
+
+- Wikidata Query Service : ❌ 
+- client (par ex. glitter): ❌️ 
+
+![](img/taille_requete_2.png)
+
+</td></table>
+
+## Dimensionnement des requêtes
+
+<table><td>
+Temps de réponse du serveur limité par un paramètre de Time out: 
+
+- Wikidata Query Service : 60s 
+- client (par ex. glitter): 300s 
+
+=> 220 000 de lignes pour **film**, genre, actor, **image** :
+
+- Wikidata Query Service : ❌ 
+- client (par ex. glitter): ✅️ 
+
+</td><td>
+![](img/taille_requete_3.png) 
+</td></table>
+
+## Combinaison de requêtes
+
+```{r combi_queries}
+get_genre_and_actors=function(film_id){
+  result=spq_init() %>% 
+      spq_set(film= film_id) %>% 
+      spq_add("?film wdt:P136 ?genre",.label="?genre") %>%
+      spq_add("?film wdt:P161 ?actor",.label="?actor",.required=FALSE) %>% 
+      spq_perform() %>% 
+      select(-film)
+  return(result)
+}
+
+tib_genre_actors=lf_c %>%
+  head() %>% 
+  mutate(data=purrr::map(film,get_genre_and_actors)) %>% 
+  unnest(cols=data) %>% 
+  clean_wikidata_table()
+```
+
+```{r show_tib_genre_actors}
+tib_genre_actors %>% select(filmLabel,genreLabel,actorLabel)
+```
+
+# Remarques sur les caractéristiques de glitter
+
+## Package glitter: vue d'ensemble
+
+![](img/tidyverse_logo.jpeg){width="150px"} Un package qui suit quelques principes du tidyverse...
+
+-   usage du **pipe %\>%**
+-   fonctions à **préfixe** (ici `spq_`)
+-   vise à la **facilité d'utilisation** (décomposition en étapes élémentaires)
+-   **évaluation** tidy (référence directe aux noms de variables)
+-   **documentation** via des **vignettes** (par exemple [ici](http://perso.ens-lyon.fr/lise.vaudor/Rpackages/glitter/articles/glitter_for_Wikidata.html))
+
+## Package glitter: fonctions principales
+
+
+<table><td>
+**Fonctions de base:** 
+
+- spq_init() pour initier une requête 
+- spq_add() pour rajouter un motif de triplet 
+- spq_perform() pour envoyer la requête
+[](img/dplyr_logo.jpeg){width="150px"} 
+
+</td><td>
+
+Fonctions notamment inspirées de dplyr (pour la **manipulation de données**) 
+
+- spq_filter() 
+- spq_select() 
+- spq_arrange() 
+- spq_mutate() 
+- spq_group_by() 
+- spq_summarise() 
+
+</td></table>
+
+## Package glitter: spq_filter()
+
+|                           |                                    |
+|---------------------------|------------------------------------|
+| ![](img/dplyr_filter.png) | **FILTRER** les résultats renvoyés |
+
+Articles avec "wikidata" dans le titre (en anglais):
+
+```{r spq_filter}
+spq_init() %>%
+  spq_add("?item wdt:P31 wd:Q13442814") %>%                        # ?item est une instance d'article scientifique
+  spq_add("?item rdfs:label ?itemTitle") %>%                       # ?item a pour titre ?itemTitle
+  spq_filter(str_detect(str_to_lower(itemTitle),"wikidata")) %>%   # <= ce titre contient (en minuscules) "wikidata"
+  spq_filter(lang(itemTitle)=="en") %>%                            # <= on filtre pour ne garder que les titres en anglais
+  spq_head(n=5) %>%
+  spq_perform()
+```
+
+## Package glitter: spq_mutate()
+
+|                           |                                     |
+|---------------------------|-------------------------------------|
+| ![](img/dplyr_mutate.png) | **MODIFIER** les résultats renvoyés |
+
+Données sur films, date de sortie ET année de sortie
+
+```{r spq_mutate}
+spq_init() %>%
+ spq_add("?film wdt:P31 wd:Q11424",.label="?film") %>%   # ?film est un instance de film
+ spq_add("?film wdt:P577 ?date") %>%                     # ?film est sorti à la date ?date
+ spq_mutate(year=year(date)) %>%                # <= ajoute variable ?year correspondant à l'année de la date
+ spq_head(5) %>% 
+ spq_perform()
+```
+
+## Package glitter: spq_select()
+
+|                           |                                          |
+|---------------------------|------------------------------------------|
+| ![](img/dplyr_select.png) | **SELECTIONNER** les variables renvoyées |
+
+Données sur films, localisation narrative, date de sortie ET année de sortie
+
+```{r spq_select}
+spq_init() %>%
+ spq_add("?film wdt:P31 wd:Q11424",.label="?film") %>%   # ?film est une instance de film
+ spq_add("?film wdt:P577 ?date") %>%                     # ?film est sorti à la date ?date
+ spq_mutate(year=year(date)) %>%                         # ?year est l'année correspondant à ?date
+ spq_select(-date) %>%                                  # <= on retire la variable ?date
+ spq_head(5) %>% 
+ spq_perform()
+```
+
+## Package glitter: spq_arrange()
+
++----------------------------+------------------------------------------+
+| ![](img/dplyr_arrange.png) | **ORDONNER** les résultats renvoyés.     |
++----------------------------+------------------------------------------+
+
+Personnes nées ou habitant à New York qui font l'objet du plus grand nombre d'articles Wikimedia.
+
+```{r spq_arrange}
+spq_init() %>%
+  spq_add("?pers wdt:P31 wd:Q5",.label="?pers") %>%       # ?pers est une instance de personne
+  spq_add("?pers wdt:P19/wdt:P131* wd:Q60") %>%           # qui est née ou est située à New-York
+  spq_add("?pers wikibase:sitelinks ?sitelinks") %>%      # ?personne fait l'objet de n liens dans le projet Wikimedia
+  spq_arrange(desc(sitelinks)) %>%                        # <= classe par ordre décroissant de n
+  spq_head(n=5) %>%
+  spq_perform()
+```
+
+## Package glitter: spq_group_by, spq_summarise()
+
++------------------------------+---------------------------------------------------+
+| ![](img/dplyr_summarise.png) | **GROUPER** et **RESUMER** les résultats renvoyés |
++------------------------------+---------------------------------------------------+
+
+Communes d'Auvergne-Rhône-Alpes qui ont été supprimées lors de la réforme territoriale (nombre par département).
+
+```{r spq_summarise}
+tib <- spq_init() %>%
+  spq_add("?com wdt:P31 wd:Q21869758") %>%          # ?com est une instance de commune disparue
+  spq_add("?com wdt:P131* wd:Q18338206") %>%        # ?com est située en Auvergne-Rhône-Alpes
+  spq_add("?com wdt:P131* ?dep",.label="?dep") %>%  # ?com est située dans ?dep
+  spq_add("?dep wdt:P31 wd:Q6465") %>%              # ?dep est une instance de département
+  spq_group_by(dep,depLabel)%>%                     # Groupe par ?dep et ?depLabel
+  spq_summarise(ncomsup=n(com)) %>%                 # Résume: ?ncomsup = nb de ?com
+  spq_perform()
+```
+
+```{r show_spq_summarise, echo=FALSE}
+tib
+```
+
+# Généralisation à l'usage d'autres endpoints
+
+## Généralisation : dbpedia
+
+![](img/logo_dbpedia.png){width="100px"} Exemple de requête sur le SPARQL endpoint de dbpedia:
+
+```{r dbpedia}
+tib <- spq_init() %>%
+  spq_add("?person dbo:birthPlace ?place") %>% # ?personne est née à ?place
+  spq_add("?person dbo:profession ?job") %>%   # ?personne a pour profession ?job
+  spq_add("?job rdfs:label ?jobLabel") %>%     # ?job a pour étiquette ?jobLabel
+  spq_filter(lang(jobLabel)=="en") %>%         # Filtre pour ne garder que les étiquettes en anglais
+  spq_add("?place rdfs:label 'Lyon'@en") %>%   # ?place a pour étiquette 'Lyon' (en anglais)
+  spq_head(10) %>%
+  spq_perform("dbpedia")                       # Envoie sur le SPARQL endpoint de DBPEDIA
+```
+
+```{r show_dbpedia,  echo=FALSE}
+tib
+```
+
+## Remarque: éléments de simplification par glitter
+
+La requête précédente en SPARQL correspond à :
+
+```         
+PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?person ?place ?job ?jobLabel
+WHERE{
+
+?person dbo:birthPlace ?place.
+?person dbo:profession ?job.
+?job rdfs:label ?jobLabel.
+?place rdfs:label 'Lyon'@en.
+FILTER(lang(?jobLabel)="en")
+}
+
+LIMIT 10
+```
+
+qui est envoyée sur le SPARQL endpoint de dbpedia, dont l'url est:
+
+<https://dbpedia.org/sparql>
+
+## Préfixes usuels
+
+Le package glitter fournit une **liste de préfixes usuels** pour alléger l'écriture de la requête...
+
+```{r show_usual_prefixes }
+usual_prefixes
+```
+
+</td>
+
+</table>
+
+## Généralisation: endpoints "usuels"
+
+... et il fournit une liste d'endpoints usuels:
+
+```{r show_usual_endpoints }
+usual_endpoints
+```
+
+## Généralisation: hal
+
+![](img/logo_hal.png){width="100px"} Exemple de requête sur le SPARQL endpoint de hal:
+
+```{r hal}
+tib <- spq_init() %>%
+  spq_add("haldoc:inria-00362381 dcterms:hasVersion ?version") %>% # Ce doc a des versions ?version
+  spq_add("?version dcterms:title ?title") %>%                     # ?version a pour titre ?titre
+  spq_add(". dcterms:creator ?creator") %>%                        # ...... et pour créateur ?creator
+  spq_add(". ore:aggregates ?pdf") %>%                             # ...... et ce lien vers un ?pdf
+  spq_add("?creator hal:person ?person") %>%                       # ?creator est une personne ?person
+  spq_add("?person foaf:name ?name") %>%                           # ?person a pour nom ?name
+  spq_perform("hal")
+```
+
+```{r show_hal, echo=FALSE}
+tib
+```
+
+<!-- # Généralisation: tous les endpoints -->
+
+<!-- ⚖️ Données SIPROJURIS: Le parcours biographique de Gaston,Louis, Henry May (1849 - 1940) -->
+
+<!-- ```{r symogih_query} -->
+
+<!-- tib <- spq_init() %>%  -->
+
+<!--   spq_prefix(prefixes=c(sym="http://symogih.org/ontology/",         # Préfixe avec sym: -->
+
+<!--                         syr="http://symogih.org/resource/")) %>%    # Préfixe avec syr: -->
+
+<!--   spq_add("?tyro rdfs:label ?TyRoLabel") %>%  -->
+
+<!--   spq_add("?tyin rdfs:label ?TyInLabel") %>%  -->
+
+<!--   spq_add("?s ?p syr:Actr56241") %>%  -->
+
+<!--   spq_add(". sym:isComponentOf ?info") %>%  -->
+
+<!--   spq_add(". sym:hasRoleType ?tyro") %>%  -->
+
+<!--   spq_add("?info sym:knowledgeUnitStandardLabel ?infoStandardLabel") %>%  -->
+
+<!--   spq_add(". sym:knowledgeUnitStandardDate ?infoStandardDate") %>%  -->
+
+<!--   spq_add(". sym:hasKnowledgeUnitType ?tyin") %>%  -->
+
+<!--   spq_arrange("?infoStandardDate") %>%  -->
+
+<!--   spq_head(n=10) %>%  -->
+
+<!--   spq_perform(endpoint="http://bhp-publi.ish-lyon.cnrs.fr:8888/sparql")    # Envoie sur le sparql endpoint -->
+
+# Perspectives
+
+## Utiliser les LOD pour recueillir et compléter des données
+
+-   🌻 données **botaniques** => associer une photo et un nom vernaculaire à un nom d'espèce en latin
+-   🏙️ lien entre **grandes villes et plaines alluviales** => récupérer les populations des grandes villes et leurs coordonnées, associer à une rivière
+-   🌍 **carte du monde** basée sur un shapefile avec des codes pays => récupérer les noms de pays, le nom et les coordonnées de leur capitales
+-   📜 corpus de **communiqués de presse du Ministère de l'Ecologie** => récupérer le nom du ministre, avec les dates de début et de fin de son mandat.
+
+=> Facilité d'usage pour (par exemple) la construction de **jeux de données pédagogiques**
+
+## Un nouveau chantier imminent
+
+![](img/chantier.png){width="100px"} Nouveau gros chantier prévu en mai-juin-juillet 2023
+
+📣 Retours utilisateurs bienvenus!!
+
+![](img/github_logo.png){width="50px"} Package installable et modifiable [ici](https://github.com/lvaudor/glitter). ![](img/capture_github.png){width="1500px"}
+
+# 🙏 Merci pour votre attention!
+
+<!-- # ANNEXES -->
+
+<!-- Recrutement de Camille Scheffler (stage M2) et exploration des Wikidata pour deux cas d'études: -->
+
+<!-- - Les jumelages en Europe et dans le monde (Ninon Briot, ENS de Lyon) -->
+
+<!-- - Le [lobbyisme aux USA](http://geoconfluences.ens-lyon.fr/informations-scientifiques/a-la-une/carte-a-la-une/lieux-de-pouvoir-lobbying-etats-unis) -->
+
+<!-- ![](img/carte_lobbies.png){width=800px} -->
+
+<!-- # Requête supp -->
+
+<!-- ```{r, eval=FALSE} -->
+
+<!-- people=spq_init() %>% -->
+
+<!--   spq_add("?louis16 is wd:Q7732") %>% -->
+
+<!--   spq_add("?louis16 (wdt:P22*/wdt:P25*) ?who",.label="?who") %>% -->
+
+<!--   spq_select("-?louis16") %>% -->
+
+<!--   spq_language("fr") %>% -->
+
+<!--   spq_perform()%>% -->
+
+<!--   mutate(num=1:n()) -->
+
+<!-- ``` -->
+
+<!-- ```{r, eval=FALSE} -->
+
+<!-- list_people=people %>% -->
+
+<!--   clean_wikidata_table() %>% -->
+
+<!--   pull(who) -->
+
+<!-- links=spq_init() %>% -->
+
+<!--   spq_add("?person %in% {list_people}") %>% -->
+
+<!--   spq_add("?person wdt:P22 ?p_father") %>% -->
+
+<!--   spq_add("?person wdt:P25 ?p_mother",.label="?p_mother") %>%  -->
+
+<!--   spq_language("fr") %>% -->
+
+<!--   spq_perform()  -->
+
+<!-- list_people=bind_rows(people, -->
+
+<!--                       links %>% -->
+
+<!--                         select(who=p_mother,whoLabel=p_motherLabel)) -->
+
+<!-- links=links %>% -->
+
+<!--   select(person,p_father,p_mother) %>%  -->
+
+<!--   tidyr::pivot_longer(cols=starts_with("p_"),  -->
+
+<!--                       names_to="which_parent", -->
+
+<!--                       values_to="parent") -->
+
+<!-- linknew=links %>%  -->
+
+<!--   left_join(people %>% -->
+
+<!--               select(who,num_person=num), -->
+
+<!--             by=c("person"="who")) %>%  -->
+
+<!--   left_join(people %>%  -->
+
+<!--               select(who,num_parent=num), -->
+
+<!--             by=c("parent"="who")) -->
+
+<!-- ``` -->
+
+<!-- ```{r, eval=FALSE} -->
+
+<!-- library(tidygraph) -->
+
+<!-- library(ggraph) -->
+
+<!-- tib_g=tidygraph::tbl_graph(nodes=people, -->
+
+<!--                            edges=linksnew)  -->
+
+<!-- tib_g %>% ggraph(layout="sugiyama") -->
+
+<!-- ``` -->
